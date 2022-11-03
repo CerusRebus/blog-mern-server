@@ -8,13 +8,13 @@ import Comment from "../models/Comment.js"
 // Create Post
 export const createPost = async (req, res) => {
     try {
-        const {title, text, image: imgURL} = req.body
+        const {image: imgURL, title, text,} = req.body
         const user = await User.findById(req.userId)
 
         let image = ''
-        if (imgURL) { // todo: if use remote server (heroku server), save image like URL and get image from external API (in example api.imgbb.com)
-            image = imgURL
-        }
+
+        if (imgURL) image = imgURL // todo: if use remote server (heroku server), save image like URL and get image from external API (in example api.imgbb.com)
+
         if (req.files) { // todo: if use localhost or hosting, save image like file on server (local server)
             image = Date.now().toString() + req.files.image.name // create name image
             const __dirname = dirname(fileURLToPath(import.meta.url)) // path current directory
@@ -42,9 +42,7 @@ export const getAll = async (req, res) => {
     try {
         const posts = await Post.find().sort('-createdAt')
         const popularPosts = await Post.find().limit(5).sort('-views')
-        if (!posts) {
-            return res.status(200).json({success: false, message: 'Постов нет.'})
-        }
+        if (!posts) return res.status(200).json({success: false, message: 'Постов нет.'})
         return res.status(200).json({success: true, posts: posts, popularPosts: popularPosts})
     } catch (error) {
         return res.status(400).json({
@@ -101,14 +99,16 @@ export const removePost = async (req, res) => {
 // Update Post
 export const updatePost = async (req, res) => {
     try {
-        const {title, text, id} = req.body
+        const {image: imgURL, title, text, id} = req.body
         const post = await Post.findById(id)
 
-        if (req.files) {
-            let fileName = Date.now().toString() + req.files.image.name // create name image
+        if (imgURL) post.imgUrl = imgURL // todo: if use remote server (heroku server), update image like URL and get image from external API (in example api.imgbb.com)
+
+        if (req.files) { // todo: if use localhost or hosting, update image like file on server (local server)
+            const image = Date.now().toString() + req.files.image.name // create name image
             const __dirname = dirname(fileURLToPath(import.meta.url)) // path current directory
-            req.files.image.mv(path.join(__dirname, '..', 'uploads', fileName)) // moves image to directory "uploads"
-            post.imgUrl = fileName || ''
+            await req.files.image.mv(path.join(__dirname, '..', 'uploads', image)) // moves image to directory "uploads"
+            post.imgUrl = image || ''
         }
         post.title = title
         post.text = text
