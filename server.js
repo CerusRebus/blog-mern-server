@@ -30,8 +30,6 @@ app.use('/api/auth', authRout)
 app.use('/api/posts', postRout)
 app.use('/api/comments', commentRout)
 
-app.get('/', () => { return 2 })
-
 async function start() {
     try {
         await mongoose.connect(`mongodb+srv://${DB_USER}:${DB_PASSWORD}@cluster0.tmxatwa.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`)

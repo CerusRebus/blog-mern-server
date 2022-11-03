@@ -8,29 +8,28 @@ import Comment from "../models/Comment.js"
 // Create Post
 export const createPost = async (req, res) => {
     try {
-        const {title, text} = req.body
+        const {title, text, image: imgURL} = req.body
         const user = await User.findById(req.userId)
-        if (req.files) {
-            let fileName = Date.now().toString() + req.files.image.name // create name image
+
+        let image = ''
+        if (imgURL) { // todo: if use remote server (heroku server), save image like URL and get image from external API (in example api.imgbb.com)
+            image = imgURL
+        }
+        if (req.files) { // todo: if use localhost or hosting, save image like file on server (local server)
+            image = Date.now().toString() + req.files.image.name // create name image
             const __dirname = dirname(fileURLToPath(import.meta.url)) // path current directory
-            await req.files.image.mv(path.join(__dirname, '..', 'uploads', fileName)) // moves image to directory "uploads"
-            const newPostWithImage = new Post({
-                username: user['username'], title, text, imgUrl: fileName, author: req.userId
-            })
-            await newPostWithImage.save()
-            await User.findByIdAndUpdate(req.userId, {
-                $push: {posts: newPostWithImage}
-            })
-            return res.status(201).json({success: true, message: 'Пост успешно добавлен.', post: newPostWithImage})
+            await req.files.image.mv(path.join(__dirname, '..', 'uploads', image)) // moves image to directory "uploads"
         }
 
-        const newPostWithoutImage = new Post({
-            username: user['username'], title, text, imgUrl: '', author: req.userId
+        const newPost = new Post({
+            username: user['username'], title, text, imgUrl: image, author: req.userId
         })
-        await newPostWithoutImage.save()
+        await newPost.save()
         await User.findByIdAndUpdate(req.userId, {
-            $push: {posts: newPostWithoutImage}
+            $push: {posts: newPost}
         })
+        return res.status(201).json({success: true, message: 'Пост успешно добавлен.', post: newPost})
+
     } catch (error) {
         return res.status(400).json({
             success: false, message: 'Ошибка при создании поста.'
